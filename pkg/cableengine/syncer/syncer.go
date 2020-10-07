@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/submariner-io/admiral/pkg/log"
 	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/cableengine"
@@ -30,7 +31,21 @@ type GatewaySyncer struct {
 var GatewayUpdateInterval = 5 * time.Second
 var GatewayStaleTimeout = GatewayUpdateInterval * 3
 
+var gatewaySyncIterations = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "gateway_sync_iterations",
+	Help: "Gateway synchronisation iterations",
+})
+var configuredGateways = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "configured_gateways",
+	Help: "number of configured gateways",
+})
+
 const updateTimestampAnnotation = "update-timestamp"
+
+func init() {
+	prometheus.MustRegister(gatewaySyncIterations)
+	prometheus.MustRegister(configuredGateways)
+}
 
 // NewEngine creates a new Engine for the local cluster
 func NewGatewaySyncer(engine cableengine.Engine, client v1typed.GatewayInterface,
@@ -68,9 +83,9 @@ func (i *GatewaySyncer) SetGatewayStatusError(err error) {
 
 func (i *GatewaySyncer) syncGatewayStatusSafe() {
 	klog.V(log.TRACE).Info("Running Gateway status sync")
+	gatewaySyncIterations.Inc()
 
 	gatewayObj := i.generateGatewayObject()
-
 	existingGw, err := i.getLastSyncedGateway(gatewayObj.Name)
 
 	if errors.IsNotFound(err) {
@@ -80,6 +95,8 @@ func (i *GatewaySyncer) syncGatewayStatusSafe() {
 			utilruntime.HandleError(fmt.Errorf("Error creating Gateway object %+v: %s", gatewayObj, err))
 			return
 		}
+
+		configuredGateways.Inc()
 	} else if err != nil {
 		utilruntime.HandleError(fmt.Errorf("Error getting existing Gateway: %s", err))
 		return
@@ -130,6 +147,7 @@ func (i *GatewaySyncer) cleanupStaleGatewayEntries(localGatewayName string) erro
 			} else {
 				klog.Warningf("Deleted stale gateway: %s, didn't report for %s",
 					gw.Name, GatewayStaleTimeout)
+				configuredGateways.Dec()
 			}
 		}
 	}

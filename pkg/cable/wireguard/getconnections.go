@@ -5,10 +5,9 @@ import (
 	"strconv"
 	"time"
 
+	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"k8s.io/klog"
-
-	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
 
 func (w *wireguard) GetConnections() (*[]v1.Connection, error) {
