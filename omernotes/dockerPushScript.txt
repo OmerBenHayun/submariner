@@ -1,0 +1,6 @@
+for IMAGE in submariner-globalnet submariner-route-agent submariner
+do
+ docker tag quay.io/submariner/${IMAGE}:dev omerbh/${IMAGE}:dev
+ docker push omerbh/${IMAGE}:dev
+done
+
