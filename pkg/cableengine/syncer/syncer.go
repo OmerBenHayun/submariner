@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/submariner-io/admiral/pkg/log"
 	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/cableengine"
@@ -37,7 +37,7 @@ var gatewaySyncIterations = prometheus.NewCounter(prometheus.CounterOpts{
 })
 var configuredGateways = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "configured_gateways",
-	Help: "number of configured gateways",
+	Help: "number of configured gateways OMERCHECKSYNC",
 })
 
 const updateTimestampAnnotation = "update-timestamp"

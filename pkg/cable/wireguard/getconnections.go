@@ -5,10 +5,27 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"k8s.io/klog"
 )
+
+var wireguardRxGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "wireguard_rx_bytes",
+	Help: "Bytes received",
+})
+
+var wireguardTxGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "wireguard_tx_bytes",
+	Help: "Bytes transmitted",
+})
+
+func init() {
+	prometheus.MustRegister(wireguardRxGauge)
+	prometheus.MustRegister(wireguardTxGauge)
+}
 
 func (w *wireguard) GetConnections() (*[]v1.Connection, error) {
 	d, err := w.client.Device(DefaultDeviceName)
@@ -145,4 +162,7 @@ func savePeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 	c.Endpoint.BackendConfig[lastChecked] = strconv.FormatInt(lc, 10)
 	c.Endpoint.BackendConfig[transmitBytes] = strconv.FormatInt(tx, 10)
 	c.Endpoint.BackendConfig[receiveBytes] = strconv.FormatInt(rx, 10)
+
+	wireguardRxGauge.Add(float64(rx))
+	wireguardTxGauge.Add(float64(tx))
 }
