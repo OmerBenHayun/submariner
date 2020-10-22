@@ -9,19 +9,27 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
-
-	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
-
-	"github.com/submariner-io/admiral/pkg/log"
-	"github.com/submariner-io/submariner/pkg/cable"
-	"github.com/submariner-io/submariner/pkg/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/vishvananda/netlink"
-
-	"k8s.io/klog"
-
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	"k8s.io/klog"
+
+	"github.com/submariner-io/admiral/pkg/log"
+	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	"github.com/submariner-io/submariner/pkg/cable"
+	"github.com/submariner-io/submariner/pkg/types"
 )
+
+var wireguardRxGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "wireguard_rx_bytes",
+	Help: "Bytes received",
+})
+
+var wireguardTxGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "wireguard_tx_bytes",
+	Help: "Bytes transmitted",
+})
 
 const (
 	// DefaultDeviceName specifies name of WireGuard network device
@@ -47,6 +55,7 @@ const (
 
 func init() {
 	cable.AddDriver(cableDriverName, NewDriver)
+	prometheus.MustRegister(wireguardRxGauge, wireguardTxGauge)
 }
 
 type specification struct {

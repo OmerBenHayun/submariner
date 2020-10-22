@@ -146,4 +146,7 @@ func savePeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 	c.Endpoint.BackendConfig[lastChecked] = strconv.FormatInt(lc, 10)
 	c.Endpoint.BackendConfig[transmitBytes] = strconv.FormatInt(tx, 10)
 	c.Endpoint.BackendConfig[receiveBytes] = strconv.FormatInt(rx, 10)
+
+	wireguardRxGauge.Add(float64(rx))
+	wireguardTxGauge.Add(float64(tx))
 }
