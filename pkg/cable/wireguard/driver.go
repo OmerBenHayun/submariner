@@ -31,6 +31,11 @@ var wireguardTxGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 	Help: "Bytes transmitted",
 })
 
+var wireguardConnectedEndpoints = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "wireguard_connected_endpoints",
+	Help: "wireguard connected endpoints",
+})
+
 const (
 	// DefaultDeviceName specifies name of WireGuard network device
 	DefaultDeviceName = "submariner"
@@ -55,7 +60,7 @@ const (
 
 func init() {
 	cable.AddDriver(cableDriverName, NewDriver)
-	prometheus.MustRegister(wireguardRxGauge, wireguardTxGauge)
+	prometheus.MustRegister(wireguardRxGauge, wireguardTxGauge, wireguardConnectedEndpoints)
 }
 
 type specification struct {
@@ -276,6 +281,7 @@ func (w *wireguard) ConnectToEndpoint(remoteEndpoint types.SubmarinerEndpoint) (
 	}
 
 	klog.V(log.DEBUG).Infof("Done connecting endpoint peer %s@%s", *remoteKey, remoteIP)
+	wireguardConnectedEndpoints.Inc()
 
 	return ip, nil
 }
@@ -323,6 +329,7 @@ func (w *wireguard) DisconnectFromEndpoint(remoteEndpoint types.SubmarinerEndpoi
 	delete(w.connections, remoteEndpoint.Spec.ClusterID)
 
 	klog.V(log.DEBUG).Infof("Done removing endpoint for cluster %s", remoteEndpoint.Spec.ClusterID)
+	wireguardConnectedEndpoints.Dec()
 
 	return nil
 }

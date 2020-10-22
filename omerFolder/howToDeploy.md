@@ -26,5 +26,27 @@ done
     * on the master again:
         * run the join command 
             ```
-            subctl join --repository omerbh --version dev --cable-driver wireguard --disable-nat broker-info.subm --kubeconfig cluster2config --clusterid cluster2
+            subctl join --repository omerbh --version omer_2n_ver --cable-driver wireguard --disable-nat broker-info.subm --kubeconfig cluster1config --clusterid cluster1
             ```
+
+
+``
+# script for that 
+
+```
+# remove all the curently running submariners and remove all the images on the workers
+for masterIP in 161.156.166.17 161.156.173.245 161.156.173.199 161.156.166.225
+do
+	ssh -i /root/.ssh/id_rsa root@${masterIP} 'kubectl delete ns submariner;kubectl delete ns submariner-operator'
+done
+
+for WorkerIP in 161.156.170.18 161.156.162.45 161.156.162.156 161.156.163.251 161.156.174.103
+do
+	ssh -i /root/.ssh/id_rsa root@${WorkerIP} 'docker rmi -f $(docker images -q)'
+done
+
+for cluster_num in 1 2
+do
+    subctl join --repository omerbh --version omer_2n_ver --cable-driver wireguard --disable-nat broker-info.subm --kubeconfig cluster${cluster_num}config --clusterid cluster${cluster_num}
+done
+```
