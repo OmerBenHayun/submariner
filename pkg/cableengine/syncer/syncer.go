@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -29,8 +30,16 @@ type GatewaySyncer struct {
 
 var GatewayUpdateInterval = 5 * time.Second
 var GatewayStaleTimeout = GatewayUpdateInterval * 3
+var gatewaySyncIterations = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "gateway_sync_iterations",
+	Help: "Gateway synchronisation iterations",
+})
 
 const updateTimestampAnnotation = "update-timestamp"
+
+func init() {
+	prometheus.MustRegister(gatewaySyncIterations)
+}
 
 // NewEngine creates a new Engine for the local cluster
 func NewGatewaySyncer(engine cableengine.Engine, client v1typed.GatewayInterface,
@@ -68,9 +77,9 @@ func (i *GatewaySyncer) SetGatewayStatusError(err error) {
 
 func (i *GatewaySyncer) syncGatewayStatusSafe() {
 	klog.V(log.TRACE).Info("Running Gateway status sync")
+	gatewaySyncIterations.Inc()
 
 	gatewayObj := i.generateGatewayObject()
-
 	existingGw, err := i.getLastSyncedGateway(gatewayObj.Name)
 
 	if errors.IsNotFound(err) {
