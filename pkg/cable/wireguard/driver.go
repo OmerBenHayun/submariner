@@ -21,20 +21,47 @@ import (
 	"github.com/submariner-io/submariner/pkg/types"
 )
 
-var wireguardRxGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "wireguard_rx_bytes",
-	Help: "Bytes received",
-})
-
-var wireguardTxGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "wireguard_tx_bytes",
-	Help: "Bytes transmitted",
-})
-
 var wireguardConnectedEndpoints = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "wireguard_connected_endpoints",
 	Help: "wireguard connected endpoints",
 })
+
+var wireguardTxGaugeVec = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Name: "wireguard_tx_bytes",
+		Help: "Bytes transmitted",
+	},
+	[]string{
+		// destination clusterID
+		"dst_clusterID",
+		// destination Endpoint hostname
+		"dst_EndPoint_hostname",
+		// destination PrivateIP
+		"dst_PrivateIP",
+		// destination PublicIP
+		"dst_PublicIP",
+		// Backend
+		"Backend",
+	},
+)
+var wireguardRxGaugeVec = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Name: "wireguard_rx_bytes",
+		Help: "Bytes received",
+	},
+	[]string{
+		// destination clusterID
+		"dst_clusterID",
+		// destination Endpoint hostname
+		"dst_EndPoint_hostname",
+		// destination PrivateIP
+		"dst_PrivateIP",
+		// destination PublicIP
+		"dst_PublicIP",
+		// Backend
+		"Backend",
+	},
+)
 
 const (
 	// DefaultDeviceName specifies name of WireGuard network device
@@ -60,7 +87,7 @@ const (
 
 func init() {
 	cable.AddDriver(cableDriverName, NewDriver)
-	prometheus.MustRegister(wireguardRxGauge, wireguardTxGauge, wireguardConnectedEndpoints)
+	prometheus.MustRegister(wireguardRxGaugeVec, wireguardTxGaugeVec, wireguardConnectedEndpoints)
 }
 
 type specification struct {

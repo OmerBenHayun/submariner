@@ -2,6 +2,7 @@ package wireguard
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"strconv"
 	"time"
 
@@ -147,6 +148,13 @@ func savePeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 	c.Endpoint.BackendConfig[transmitBytes] = strconv.FormatInt(tx, 10)
 	c.Endpoint.BackendConfig[receiveBytes] = strconv.FormatInt(rx, 10)
 
-	wireguardRxGauge.Add(float64(rx))
-	wireguardTxGauge.Add(float64(tx))
+	//wireguardRxGauge.Add(float64(rx))
+	wireguardRxGaugeVec.With(prometheus.Labels{"dst_clusterID": c.Endpoint.ClusterID,
+		"dst_EndPoint_hostname": c.Endpoint.Hostname, "dst_PrivateIP": c.Endpoint.PrivateIP,
+		"dst_PublicIP": c.Endpoint.PublicIP, "Backend": c.Endpoint.Backend,
+	}).Set(float64(rx)) //todo :maybe change that to endpoint ip identifier
+	wireguardTxGaugeVec.With(prometheus.Labels{"dst_clusterID": c.Endpoint.ClusterID,
+		"dst_EndPoint_hostname": c.Endpoint.Hostname, "dst_PrivateIP": c.Endpoint.PrivateIP,
+		"dst_PublicIP": c.Endpoint.PublicIP, "Backend": c.Endpoint.Backend,
+	}).Set(float64(tx)) //todo :maybe change that to endpoint ip identifier
 }
