@@ -27,24 +27,25 @@ var wireguardConnectedEndpoints = prometheus.NewGauge(prometheus.GaugeOpts{
 	Help: "wireguard connected endpoints",
 })
 
-//todo maybe theris better chise beside gauge
+var endpointLabels = []string{
+	// destination clusterID
+	"dst_clusterID",
+	// destination Endpoint hostname
+	"dst_EndPoint_hostname",
+	// destination PrivateIP
+	"dst_PrivateIP",
+	// destination PublicIP
+	"dst_PublicIP",
+	// Backend
+	"Backend",
+}
+
 var wireguardConnectionLifetimeGaugeVec = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Name: "wireguard_connection_lifetime",
 		Help: "wireguard connection lifetime in seconds",
 	},
-	[]string{
-		// destination clusterID
-		"dst_clusterID",
-		// destination Endpoint hostname
-		"dst_EndPoint_hostname",
-		// destination PrivateIP
-		"dst_PrivateIP",
-		// destination PublicIP
-		"dst_PublicIP",
-		// Backend
-		"Backend",
-	},
+	endpointLabels,
 )
 
 var wireguardTxGaugeVec = prometheus.NewGaugeVec(
@@ -52,36 +53,14 @@ var wireguardTxGaugeVec = prometheus.NewGaugeVec(
 		Name: "wireguard_tx_bytes",
 		Help: "Bytes transmitted",
 	},
-	[]string{
-		// destination clusterID
-		"dst_clusterID",
-		// destination Endpoint hostname
-		"dst_EndPoint_hostname",
-		// destination PrivateIP
-		"dst_PrivateIP",
-		// destination PublicIP
-		"dst_PublicIP",
-		// Backend
-		"Backend",
-	},
+	endpointLabels,
 )
 var wireguardRxGaugeVec = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Name: "wireguard_rx_bytes",
 		Help: "Bytes received",
 	},
-	[]string{
-		// destination clusterID
-		"dst_clusterID",
-		// destination Endpoint hostname
-		"dst_EndPoint_hostname",
-		// destination PrivateIP
-		"dst_PrivateIP",
-		// destination PublicIP
-		"dst_PublicIP",
-		// Backend
-		"Backend",
-	},
+	endpointLabels,
 )
 
 const (
@@ -330,6 +309,7 @@ func (w *wireguard) ConnectToEndpoint(remoteEndpoint types.SubmarinerEndpoint) (
 	}
 
 	klog.V(log.DEBUG).Infof("Done connecting endpoint peer %s@%s", *remoteKey, remoteIP)
+
 	connection.Endpoint.BackendConfig[timeCreated] = strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	return ip, nil
@@ -379,37 +359,18 @@ func (w *wireguard) DisconnectFromEndpoint(remoteEndpoint types.SubmarinerEndpoi
 
 	klog.V(log.DEBUG).Infof("Done removing endpoint for cluster %s", remoteEndpoint.Spec.ClusterID)
 
-	//fixme: make more elegant
-	wireguardRxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
-		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
-		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
-	})
-	wireguardTxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
-		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
-		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
-	})
-	wireguardConnectionLifetimeGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
-		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
-		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
-	})
+	endpointLabels := getLabelsFromEndpoint(&remoteEndpoint.Spec)
+
+	wireguardRxGaugeVec.Delete(endpointLabels)
+	wireguardTxGaugeVec.Delete(endpointLabels)
+	wireguardConnectionLifetimeGaugeVec.Delete(endpointLabels)
 
 	return nil
 }
 
 func (w *wireguard) GetActiveConnections(clusterID string) ([]string, error) {
-	/*
-		// force caller to skip duplicate handling
-		return make([]string, 0), nil
-		fixme REMOVE THIS PART (OLD DIN CODE)
-	*/
-	connections := []string{}
-	for j := range w.connections {
-		connections = append(connections, w.connections[j].Endpoint.CableName)
-	}
-
-	klog.Infof("Active connections: %v", connections)
-
-	return connections, nil
+	// force caller to skip duplicate handling
+	return make([]string, 0), nil
 }
 
 // Create new wg link and assign addr from local subnets
