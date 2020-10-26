@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -25,6 +26,26 @@ var wireguardConnectedEndpoints = prometheus.NewGauge(prometheus.GaugeOpts{
 	Name: "wireguard_connected_endpoints",
 	Help: "wireguard connected endpoints",
 })
+
+//todo maybe theris better chise beside gauge
+var wireguardConnectionLifetimeGaugeVec = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Name: "wireguard_connection_lifetime",
+		Help: "wireguard connection lifetime in seconds",
+	},
+	[]string{
+		// destination clusterID
+		"dst_clusterID",
+		// destination Endpoint hostname
+		"dst_EndPoint_hostname",
+		// destination PrivateIP
+		"dst_PrivateIP",
+		// destination PublicIP
+		"dst_PublicIP",
+		// Backend
+		"Backend",
+	},
+)
 
 var wireguardTxGaugeVec = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
@@ -80,6 +101,7 @@ const (
 	receiveBytes    = "ReceiveBytes"  // for peer connection status
 	transmitBytes   = "TransmitBytes" // for peer connection status
 	lastChecked     = "LastChecked"   // for connection peer status
+	timeCreated     = "TimeCreated"   // for connection time alive
 
 	// TODO use submariner prefix
 	specEnvPrefix = "ce_ipsec"
@@ -87,7 +109,7 @@ const (
 
 func init() {
 	cable.AddDriver(cableDriverName, NewDriver)
-	prometheus.MustRegister(wireguardRxGaugeVec, wireguardTxGaugeVec, wireguardConnectedEndpoints)
+	prometheus.MustRegister(wireguardRxGaugeVec, wireguardTxGaugeVec, wireguardConnectedEndpoints, wireguardConnectionLifetimeGaugeVec)
 }
 
 type specification struct {
@@ -309,6 +331,7 @@ func (w *wireguard) ConnectToEndpoint(remoteEndpoint types.SubmarinerEndpoint) (
 
 	klog.V(log.DEBUG).Infof("Done connecting endpoint peer %s@%s", *remoteKey, remoteIP)
 	wireguardConnectedEndpoints.Inc()
+	connection.Endpoint.BackendConfig[timeCreated] = strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	return ip, nil
 }

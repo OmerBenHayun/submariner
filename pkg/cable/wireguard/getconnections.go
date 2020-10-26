@@ -148,7 +148,9 @@ func savePeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 	c.Endpoint.BackendConfig[transmitBytes] = strconv.FormatInt(tx, 10)
 	c.Endpoint.BackendConfig[receiveBytes] = strconv.FormatInt(rx, 10)
 
-	//wireguardRxGauge.Add(float64(rx))
+	//todo make this elgant
+	timeCreated, _ := strconv.ParseInt(c.Endpoint.BackendConfig[timeCreated], 10, 64)
+	timeAlive := float64((time.Now().UnixNano() - timeCreated) / int64(time.Second))
 	wireguardRxGaugeVec.With(prometheus.Labels{"dst_clusterID": c.Endpoint.ClusterID,
 		"dst_EndPoint_hostname": c.Endpoint.Hostname, "dst_PrivateIP": c.Endpoint.PrivateIP,
 		"dst_PublicIP": c.Endpoint.PublicIP, "Backend": c.Endpoint.Backend,
@@ -157,4 +159,8 @@ func savePeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 		"dst_EndPoint_hostname": c.Endpoint.Hostname, "dst_PrivateIP": c.Endpoint.PrivateIP,
 		"dst_PublicIP": c.Endpoint.PublicIP, "Backend": c.Endpoint.Backend,
 	}).Set(float64(tx)) //todo :maybe change that to endpoint ip identifier
+	wireguardConnectionLifetimeGaugeVec.With(prometheus.Labels{"dst_clusterID": c.Endpoint.ClusterID,
+		"dst_EndPoint_hostname": c.Endpoint.Hostname, "dst_PrivateIP": c.Endpoint.PrivateIP,
+		"dst_PublicIP": c.Endpoint.PublicIP, "Backend": c.Endpoint.Backend,
+	}).Set(timeAlive) //todo :maybe change that to endpoint ip identifier
 }
