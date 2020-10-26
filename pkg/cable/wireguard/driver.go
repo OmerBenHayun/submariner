@@ -330,7 +330,6 @@ func (w *wireguard) ConnectToEndpoint(remoteEndpoint types.SubmarinerEndpoint) (
 	}
 
 	klog.V(log.DEBUG).Infof("Done connecting endpoint peer %s@%s", *remoteKey, remoteIP)
-	wireguardConnectedEndpoints.Inc()
 	connection.Endpoint.BackendConfig[timeCreated] = strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	return ip, nil
@@ -379,8 +378,7 @@ func (w *wireguard) DisconnectFromEndpoint(remoteEndpoint types.SubmarinerEndpoi
 	delete(w.connections, remoteEndpoint.Spec.ClusterID)
 
 	klog.V(log.DEBUG).Infof("Done removing endpoint for cluster %s", remoteEndpoint.Spec.ClusterID)
-	//todo: make more elegant
-	wireguardConnectedEndpoints.Dec()
+	//fixme: make more elegant
 	wireguardRxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
 		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
 		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,

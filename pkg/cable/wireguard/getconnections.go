@@ -41,6 +41,8 @@ func (w *wireguard) GetConnections() (*[]v1.Connection, error) {
 		connections = append(connections, *connection.DeepCopy())
 	}
 
+	wireguardConnectedEndpoints.Set(float64(len(d.Peers)))
+
 	return &connections, nil
 }
 
@@ -148,7 +150,7 @@ func savePeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 	c.Endpoint.BackendConfig[transmitBytes] = strconv.FormatInt(tx, 10)
 	c.Endpoint.BackendConfig[receiveBytes] = strconv.FormatInt(rx, 10)
 
-	//todo make this elgant
+	//fixme make this elgant
 	timeCreated, _ := strconv.ParseInt(c.Endpoint.BackendConfig[timeCreated], 10, 64)
 	timeAlive := float64((time.Now().UnixNano() - timeCreated) / int64(time.Second))
 	wireguardRxGaugeVec.With(prometheus.Labels{"dst_clusterID": c.Endpoint.ClusterID,
