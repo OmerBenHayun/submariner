@@ -23,9 +23,9 @@ func (w *wireguard) GetConnections() (*[]v1.Connection, error) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
-	wireguardConnectionLifetimeGaugeVec.Reset()
-	wireguardTxGaugeVec.Reset()
-	wireguardRxGaugeVec.Reset()
+	//wireguardConnectionLifetimeGaugeVec.Reset() //todo:find better solution
+	//wireguardTxGaugeVec.Reset()//todo:find better solution
+	//wireguardRxGaugeVec.Reset()//todo:find better solution
 
 	for i := range d.Peers {
 		key := d.Peers[i].PublicKey

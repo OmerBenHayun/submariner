@@ -378,28 +378,38 @@ func (w *wireguard) DisconnectFromEndpoint(remoteEndpoint types.SubmarinerEndpoi
 	delete(w.connections, remoteEndpoint.Spec.ClusterID)
 
 	klog.V(log.DEBUG).Infof("Done removing endpoint for cluster %s", remoteEndpoint.Spec.ClusterID)
-	/*
-		//fixme: make more elegant
-		wireguardRxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
-			"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
-			"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
-		})
-		wireguardTxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
-			"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
-			"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
-		})
-		wireguardConnectionLifetimeGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
-			"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
-			"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
-		})
-	*/
+
+	//fixme: make more elegant
+	wireguardRxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
+		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
+		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
+	})
+	wireguardTxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
+		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
+		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
+	})
+	wireguardConnectionLifetimeGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
+		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
+		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
+	})
 
 	return nil
 }
 
 func (w *wireguard) GetActiveConnections(clusterID string) ([]string, error) {
-	// force caller to skip duplicate handling
-	return make([]string, 0), nil
+	/*
+		// force caller to skip duplicate handling
+		return make([]string, 0), nil
+		fixme REMOVE THIS PART (OLD DIN CODE)
+	*/
+	connections := []string{}
+	for j := range w.connections {
+		connections = append(connections, w.connections[j].Endpoint.CableName)
+	}
+
+	klog.Infof("Active connections: %v", connections)
+
+	return connections, nil
 }
 
 // Create new wg link and assign addr from local subnets
