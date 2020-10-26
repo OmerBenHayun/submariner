@@ -379,7 +379,20 @@ func (w *wireguard) DisconnectFromEndpoint(remoteEndpoint types.SubmarinerEndpoi
 	delete(w.connections, remoteEndpoint.Spec.ClusterID)
 
 	klog.V(log.DEBUG).Infof("Done removing endpoint for cluster %s", remoteEndpoint.Spec.ClusterID)
+	//todo: make more elegant
 	wireguardConnectedEndpoints.Dec()
+	wireguardRxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
+		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
+		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
+	})
+	wireguardTxGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
+		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
+		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
+	})
+	wireguardConnectionLifetimeGaugeVec.Delete(prometheus.Labels{"dst_clusterID": remoteEndpoint.Spec.ClusterID,
+		"dst_EndPoint_hostname": remoteEndpoint.Spec.Hostname, "dst_PrivateIP": remoteEndpoint.Spec.PrivateIP,
+		"dst_PublicIP": remoteEndpoint.Spec.PublicIP, "Backend": remoteEndpoint.Spec.Backend,
+	})
 
 	return nil
 }
