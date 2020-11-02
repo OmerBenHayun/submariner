@@ -17,11 +17,11 @@ var connectionLabels = []string{
 	"cable_driver",
 }
 
-//todo: add wireguard relevat metrics for connectionActivationStatus
-var connectionActivationStatus = prometheus.NewGaugeVec( //fixme find a better/descriptive name metric for that.adding
+// fixme find a better/descriptive name metric for that.adding
+var ConnectionActivationStatus = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Name: "connection_activation_status",
-		Help: "connection is connected/not connected.represented as 1/0 respectively",
+		Help: "connection is connected/disconnected.represented as 1/0 respectively",
 	},
 	connectionLabels,
 )
@@ -50,5 +50,6 @@ var ConnectionRxBytes = prometheus.NewGaugeVec(
 )
 
 func init() {
-	prometheus.MustRegister(connectionActivationStatus, ConnectionUptimeDurationSeconds, ConnectionTxBytes, ConnectionRxBytes)
+	prometheus.MustRegister(ConnectionActivationStatus, ConnectionUptimeDurationSeconds,
+		ConnectionTxBytes, ConnectionRxBytes)
 }

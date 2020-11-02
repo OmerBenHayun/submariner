@@ -318,6 +318,7 @@ func (w *wireguard) DisconnectFromEndpoint(remoteEndpoint types.SubmarinerEndpoi
 
 	endpointLabels := getLabelsFromEndpoint(&remoteEndpoint.Spec)
 
+	cable.ConnectionActivationStatus.With(endpointLabels).Set(0)
 	cable.ConnectionRxBytes.Delete(endpointLabels)
 	cable.ConnectionTxBytes.Delete(endpointLabels)
 	cable.ConnectionUptimeDurationSeconds.Delete(endpointLabels)

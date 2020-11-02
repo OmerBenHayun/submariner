@@ -38,7 +38,6 @@ func (w *wireguard) GetConnections() (*[]v1.Connection, error) {
 		}
 
 		w.updateConnectionForPeer(&d.Peers[i], connection)
-
 		connections = append(connections, *connection.DeepCopy())
 	}
 
@@ -98,7 +97,9 @@ func (w *wireguard) updateConnectionForPeer(p *wgtypes.Peer, connection *v1.Conn
 
 		return
 	}
+
 	handshakeDelta := time.Since(p.LastHandshakeTime)
+
 	if handshakeDelta > handshakeTimeout {
 		// hard error, really long time since handshake
 		connection.SetStatus(v1.ConnectionError, "no handshake for %.1f seconds",
@@ -154,6 +155,7 @@ func saveAndExportPeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 
 	cable.ConnectionTxBytes.With(endpointLabels).Set(float64(rx))
 	cable.ConnectionRxBytes.With(endpointLabels).Set(float64(tx))
+	cable.ConnectionActivationStatus.With(endpointLabels).Set(1)
 	cable.ConnectionUptimeDurationSeconds.With(endpointLabels).Set(timeAlive)
 }
 
