@@ -40,7 +40,9 @@ Currently assuming Linux Kernel WireGuard (`wgtypes.LinuxKernel`).
   bin/subctl join --cable-driver wireguard --disable-nat broker-info.subm
   ```
 
-- The default UDP listen port for WireGuard is `5871`. It can be changed by setting the env var `CE_IPSEC_NATTPORT`
+- The default UDP listen port for submariner WireGuard driver is `4500`. It can be changed by setting the env var `CE_IPSEC_NATTPORT`
+- We assumes that the wireguard network device named `submariner` is exclusively
+ used by submariner-gateway and should not be edited manually.
 
 ## Troubleshooting, limitations
 
@@ -64,60 +66,13 @@ fail if the CNI does SNAT before routing to Wireguard** (e.g., failed with Calic
 
 ## Monitoring
 
-the cabledriver 
+the cabledriver
 The following metrics are exposed currently:
-* metrics that exposed per gateway:
-    * `wireguard_connected_endpoints` the number of connections.
-* metrics that exposed per connection:
-    * `wireguard_connection_lifetime` the wireguard connection lifetime in seconds.
-    * `wireguard_tx_bytes` Bytes transmitted for the connection.
-    * `wireguard_rx_bytes` Bytes received for the connection.
-### example
-for example we have 2 connected clusters , `cluster1` and `cluster2`.
-```
-Showing information for cluster "kubernetes-admin@cluster.local":
-GATEWAY                         CLUSTER                 REMOTE IP       CABLE DRIVER            SUBNETS                                 STATUS
-omer-sub2-vm-worker2            cluster2                10.243.64.7     wireguard               10.234.0.0/18, 10.234.64.0/18           connected
-```
-when we curl to `cluster1` gateway node with `curl 10.243.64.6:8080/metrics` we can observe the metrics:
-```
-# HELP wireguard_connected_endpoints wireguard connected endpoints
-# TYPE wireguard_connected_endpoints gauge
-wireguard_connected_endpoints 1
-# HELP wireguard_connection_lifetime wireguard connection lifetime in seconds
-# TYPE wireguard_connection_lifetime gauge
-wireguard_connection_lifetime{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker2",dst_PrivateIP="10.243.64.7",dst_PublicIP="",dst_clusterID="cluster2"} 2488
-# HELP wireguard_rx_bytes Bytes received
-# TYPE wireguard_rx_bytes gauge
-wireguard_rx_bytes{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker2",dst_PrivateIP="10.243.64.7",dst_PublicIP="",dst_clusterID="cluster2"} 7716
-# HELP wireguard_tx_bytes Bytes transmitted
-# TYPE wireguard_tx_bytes gauge
-wireguard_tx_bytes{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker2",dst_PrivateIP="10.243.64.7",dst_PublicIP="",dst_clusterID="cluster2"} 6048
-```
-after adding another cluster called `cluster3`:
-```
-Showing information for cluster "kubernetes-admin@cluster.local":
-GATEWAY                         CLUSTER                 REMOTE IP       CABLE DRIVER        SUBNETS                                 STATUS
-omer-sub2-vm-worker2            cluster2                10.243.64.7     wireguard           10.234.0.0/18, 10.234.64.0/18           connected
-omer-sub2-vm-worker3            cluster3                10.243.64.9     wireguard           11.235.0.0/18, 11.235.64.0/18           connected
-```
-when we curl again to `cluster1` gateway node with `curl 10.243.64.6:8080/metrics` we can observe the metrics:
-```
-# HELP wireguard_connected_endpoints wireguard connected endpoints
-# TYPE wireguard_connected_endpoints gauge
-wireguard_connected_endpoints 2
-# HELP wireguard_connection_lifetime wireguard connection lifetime in seconds
-# TYPE wireguard_connection_lifetime gauge
-wireguard_connection_lifetime{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker2",dst_PrivateIP="10.243.64.7",dst_PublicIP="",dst_clusterID="cluster2"} 2904
-wireguard_connection_lifetime{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker3",dst_PrivateIP="10.243.64.9",dst_PublicIP="",dst_clusterID="cluster3"} 83
-# HELP wireguard_rx_bytes Bytes received
-# TYPE wireguard_rx_bytes gauge
-wireguard_rx_bytes{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker2",dst_PrivateIP="10.243.64.7",dst_PublicIP="",dst_clusterID="cluster2"} 8896
-wireguard_rx_bytes{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker3",dst_PrivateIP="10.243.64.9",dst_PublicIP="",dst_clusterID="cluster3"} 308
-# HELP wireguard_tx_bytes Bytes transmitted
-# TYPE wireguard_tx_bytes gauge
-wireguard_tx_bytes{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker2",dst_PrivateIP="10.243.64.7",dst_PublicIP="",dst_clusterID="cluster2"} 6996
-wireguard_tx_bytes{Backend="wireguard",dst_EndPoint_hostname="omer-sub2-vm-worker3",dst_PrivateIP="10.243.64.9",dst_PublicIP="",dst_clusterID="cluster3"} 400
-```
-### known issues
-- if one removes manually a peer from the `submariner` wireguard interface the metrics that exposed for that connection Won't delete.
+
+- metrics that exposed per gateway:
+  - `wireguard_connected_endpoints` the number of connections.
+- metrics that exposed per connection:
+  - `wireguard_connection_lifetime` the wireguard connection lifetime in seconds.
+  - `wireguard_tx_bytes` Bytes transmitted for the connection.
+  - `wireguard_rx_bytes` Bytes received for the connection.
+  

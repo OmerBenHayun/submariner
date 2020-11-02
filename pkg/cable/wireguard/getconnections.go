@@ -10,6 +10,7 @@ import (
 	"k8s.io/klog"
 
 	v1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	"github.com/submariner-io/submariner/pkg/cable"
 )
 
 func (w *wireguard) GetConnections() (*[]v1.Connection, error) {
@@ -40,8 +41,6 @@ func (w *wireguard) GetConnections() (*[]v1.Connection, error) {
 
 		connections = append(connections, *connection.DeepCopy())
 	}
-
-	wireguardConnectedEndpoints.Set(float64(len(d.Peers)))
 
 	return &connections, nil
 }
@@ -99,7 +98,6 @@ func (w *wireguard) updateConnectionForPeer(p *wgtypes.Peer, connection *v1.Conn
 
 		return
 	}
-
 	handshakeDelta := time.Since(p.LastHandshakeTime)
 	if handshakeDelta > handshakeTimeout {
 		// hard error, really long time since handshake
@@ -154,14 +152,14 @@ func saveAndExportPeerTraffic(c *v1.Connection, lc, tx, rx int64) {
 	timeCreated, _ := strconv.ParseInt(c.Endpoint.BackendConfig[timeCreated], 10, 64)
 	timeAlive := float64((time.Now().UnixNano() - timeCreated) / int64(time.Second))
 
-	wireguardRxGaugeVec.With(endpointLabels).Set(float64(rx))
-	wireguardTxGaugeVec.With(endpointLabels).Set(float64(tx))
-	wireguardConnectionLifetimeGaugeVec.With(endpointLabels).Set(timeAlive)
+	cable.ConnectionTxBytes.With(endpointLabels).Set(float64(rx))
+	cable.ConnectionRxBytes.With(endpointLabels).Set(float64(tx))
+	cable.ConnectionUptimeDurationSeconds.With(endpointLabels).Set(timeAlive)
 }
 
 func getLabelsFromEndpoint(e *v1.EndpointSpec) prometheus.Labels {
-	return prometheus.Labels{"dst_clusterID": e.ClusterID,
-		"dst_EndPoint_hostname": e.Hostname, "dst_PrivateIP": e.PrivateIP,
-		"dst_PublicIP": e.PublicIP, "Backend": e.Backend,
+	return prometheus.Labels{"clusterID": e.ClusterID,
+		"hostname": e.Hostname, "privateIP": e.PrivateIP,
+		"publicIP": e.PublicIP, "cable_driver": e.Backend,
 	}
 }
