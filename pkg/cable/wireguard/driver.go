@@ -269,6 +269,8 @@ func (w *wireguard) ConnectToEndpoint(remoteEndpoint types.SubmarinerEndpoint) (
 
 	connection.Endpoint.BackendConfig[timeCreated] = strconv.FormatInt(time.Now().UnixNano(), 10)
 
+	cable.RecordConnectionStatusActive(cableDriverName, &w.localEndpoint.Spec, &connection.Endpoint)
+
 	return ip, nil
 }
 
@@ -316,12 +318,12 @@ func (w *wireguard) DisconnectFromEndpoint(remoteEndpoint types.SubmarinerEndpoi
 
 	klog.V(log.DEBUG).Infof("Done removing endpoint for cluster %s", remoteEndpoint.Spec.ClusterID)
 
-	endpointLabels := getLabelsFromEndpoint(&remoteEndpoint.Spec)
-
-	cable.ConnectionActivationStatus.With(endpointLabels).Set(0)
-	cable.ConnectionRxBytes.Delete(endpointLabels)
-	cable.ConnectionTxBytes.Delete(endpointLabels)
-	cable.ConnectionUptimeDurationSeconds.Delete(endpointLabels)
+	cable.RecordConnectionStatusInactive(cableDriverName, &w.localEndpoint.Spec, &remoteEndpoint.Spec)
+	//endpointLabels := getLabelsFromEndpoint(&remoteEndpoint.Spec)
+	//cable.ConnectionActivationStatus.With(endpointLabels).Set(0)
+	//cable.ConnectionRxBytes.Delete(endpointLabels)
+	//cable.ConnectionTxBytes.Delete(endpointLabels)
+	//cable.ConnectionUptimeDurationSeconds.Delete(endpointLabels)
 
 	return nil
 }
