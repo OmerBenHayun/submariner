@@ -2,6 +2,7 @@ package cable
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"time"
 
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
@@ -108,10 +109,24 @@ var (
 			remoteHostnameLabel,
 		},
 	)
+
+	connectionEstablishTimestemp = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "connection_establish_timestemp",
+			Help: "the Unix timestamp at which the connection established",
+		},
+		[]string{
+			cableDriverLabel,
+			localClusterLabel,
+			localHostnameLabel,
+			remoteClusterLabel,
+			remoteHostnameLabel,
+		},
+	)
 )
 
 func init() {
-	prometheus.MustRegister(rxGauge, txGauge, connectionActivationStatus)
+	prometheus.MustRegister(rxGauge, txGauge, connectionActivationStatus, connectionEstablishTimestemp)
 }
 
 func RecordRxBytes(cableDriverName string, localEndpoint, remoteEndpoint *submv1.EndpointSpec, bytes int) {
@@ -135,13 +150,15 @@ func RecordTxBytes(cableDriverName string, localEndpoint, remoteEndpoint *submv1
 }
 
 func RecordConnectionStatusActive(cableDriverName string, localEndpoint, remoteEndpoint *submv1.EndpointSpec) {
-	connectionActivationStatus.With(prometheus.Labels{
+	labels := prometheus.Labels{
 		cableDriverLabel:    cableDriverName,
 		localClusterLabel:   localEndpoint.ClusterID,
 		localHostnameLabel:  localEndpoint.Hostname,
 		remoteClusterLabel:  remoteEndpoint.ClusterID,
 		remoteHostnameLabel: remoteEndpoint.Hostname,
-	}).Set(float64(1))
+	}
+	connectionActivationStatus.With(labels).Set(float64(1))
+	connectionEstablishTimestemp.With(labels).Set(float64(time.Now().Unix()))
 }
 
 func RecordConnectionStatusInactive(cableDriverName string, localEndpoint, remoteEndpoint *submv1.EndpointSpec) {
@@ -155,4 +172,5 @@ func RecordConnectionStatusInactive(cableDriverName string, localEndpoint, remot
 	connectionActivationStatus.With(labels).Set(float64(0))
 	txGauge.Delete(labels)
 	rxGauge.Delete(labels)
+	connectionEstablishTimestemp.Delete(labels)
 }
