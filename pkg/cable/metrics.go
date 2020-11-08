@@ -58,9 +58,9 @@ var (
 		},
 	)
 
-	connectionEstablishTimestemp = prometheus.NewGaugeVec(
+	connectionEstablishTimestamp = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "connection_establish_timestemp",
+			Name: "connection_established_timestamp",
 			Help: "the Unix timestamp at which the connection established",
 		},
 		[]string{
@@ -74,7 +74,7 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(rxGauge, txGauge, connectionActivationStatus, connectionEstablishTimestemp)
+	prometheus.MustRegister(rxGauge, txGauge, connectionActivationStatus, connectionEstablishTimestamp)
 }
 
 func RecordRxBytes(cableDriverName string, localEndpoint, remoteEndpoint *submv1.EndpointSpec, bytes int) {
@@ -106,7 +106,7 @@ func RecordConnectionStatusActive(cableDriverName string, localEndpoint, remoteE
 		remoteHostnameLabel: remoteEndpoint.Hostname,
 	}
 	connectionActivationStatus.With(labels).Set(float64(1))
-	connectionEstablishTimestemp.With(labels).Set(float64(time.Now().Unix()))
+	connectionEstablishTimestamp.With(labels).Set(float64(time.Now().Unix()))
 }
 
 func RecordConnectionStatusInactive(cableDriverName string, localEndpoint, remoteEndpoint *submv1.EndpointSpec) {
@@ -120,5 +120,5 @@ func RecordConnectionStatusInactive(cableDriverName string, localEndpoint, remot
 	connectionActivationStatus.With(labels).Set(float64(0))
 	txGauge.Delete(labels)
 	rxGauge.Delete(labels)
-	connectionEstablishTimestemp.Delete(labels)
+	connectionEstablishTimestamp.Delete(labels)
 }

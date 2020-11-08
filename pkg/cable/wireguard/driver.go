@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
@@ -38,7 +37,6 @@ const (
 	receiveBytes    = "ReceiveBytes"  // for peer connection status
 	transmitBytes   = "TransmitBytes" // for peer connection status
 	lastChecked     = "LastChecked"   // for connection peer status
-	timeCreated     = "TimeCreated"   // for connection time alive
 
 	// TODO use submariner prefix
 	specEnvPrefix = "ce_ipsec"
@@ -267,7 +265,6 @@ func (w *wireguard) ConnectToEndpoint(remoteEndpoint types.SubmarinerEndpoint) (
 
 	klog.V(log.DEBUG).Infof("Done connecting endpoint peer %s@%s", *remoteKey, remoteIP)
 
-	connection.Endpoint.BackendConfig[timeCreated] = strconv.FormatInt(time.Now().UnixNano(), 10)
 	cable.RecordConnectionStatusActive(cableDriverName, &w.localEndpoint.Spec, &connection.Endpoint)
 
 	return ip, nil
