@@ -1,8 +1,9 @@
 package cable
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )

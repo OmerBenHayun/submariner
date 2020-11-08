@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"k8s.io/klog"
 
@@ -144,18 +143,11 @@ func peerTrafficDelta(c *v1.Connection, key string, newVal int64) int64 {
 }
 
 // Save backendConfig[key] and export the metrics to prometheus
-func saveAndRecordPeerTraffic(localEndpoint *v1.EndpointSpec, remoteEndpoint *v1.EndpointSpec, lc, tx, rx int64) {
+func saveAndRecordPeerTraffic(localEndpoint, remoteEndpoint *v1.EndpointSpec, lc, tx, rx int64) {
 	remoteEndpoint.BackendConfig[lastChecked] = strconv.FormatInt(lc, 10)
 	remoteEndpoint.BackendConfig[transmitBytes] = strconv.FormatInt(tx, 10)
 	remoteEndpoint.BackendConfig[receiveBytes] = strconv.FormatInt(rx, 10)
 
 	cable.RecordTxBytes(cableDriverName, localEndpoint, remoteEndpoint, int(tx))
 	cable.RecordRxBytes(cableDriverName, localEndpoint, remoteEndpoint, int(rx))
-}
-
-func getLabelsFromEndpoint(e *v1.EndpointSpec) prometheus.Labels {
-	return prometheus.Labels{"clusterID": e.ClusterID,
-		"hostname": e.Hostname, "privateIP": e.PrivateIP,
-		"publicIP": e.PublicIP, "cable_driver": e.Backend,
-	}
 }
