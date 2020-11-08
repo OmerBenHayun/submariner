@@ -149,15 +149,8 @@ func saveAndRecordPeerTraffic(localEndpoint *v1.EndpointSpec, remoteEndpoint *v1
 	remoteEndpoint.BackendConfig[transmitBytes] = strconv.FormatInt(tx, 10)
 	remoteEndpoint.BackendConfig[receiveBytes] = strconv.FormatInt(rx, 10)
 
-	//endpointLabels := getLabelsFromEndpoint(&localEndpoint.Endpoint)
-	//timeCreated, _ := strconv.ParseInt(localEndpoint.Endpoint.BackendConfig[timeCreated], 10, 64)
-	//timeAlive := float64((time.Now().UnixNano() - timeCreated) / int64(time.Second))
 	cable.RecordTxBytes(cableDriverName, localEndpoint, remoteEndpoint, int(tx))
 	cable.RecordRxBytes(cableDriverName, localEndpoint, remoteEndpoint, int(rx))
-	//cable.ConnectionTxBytes.With(endpointLabels).Set(float64(rx))
-	//cable.ConnectionRxBytes.With(endpointLabels).Set(float64(tx))
-	//cable.ConnectionActivationStatus.With(endpointLabels).Set(1)
-	//cable.ConnectionUptimeDurationSeconds.With(endpointLabels).Set(timeAlive)
 }
 
 func getLabelsFromEndpoint(e *v1.EndpointSpec) prometheus.Labels {
